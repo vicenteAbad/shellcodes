@@ -1,12 +1,12 @@
 # Shellcodes
 
-## 1. ¿Qué es un Shellcode?
+### 1. ¿Qué es un Shellcode?
 Un **shellcode** es un fragmento de código en lenguaje ensamblador diseñado para ejecutarse dentro de un proceso objetivo. 
 Se usa comúnmente en **exploits** para tomar el control de un sistema vulnerable.
 
 Los shellcodes pueden ejecutarse en memoria sin necesidad de archivos, lo que los hace ideales para ataques como **buffer overflows** o **inyecciones de código**.
 
-## 2. Tipos de Shellcodes
+### 2. Tipos de Shellcodes
 Existen diferentes tipos de shellcodes según el contexto de ataque:
 
 - **Shellcodes de usuario**: Se ejecutan dentro de procesos de usuario sin privilegios elevados.
@@ -15,7 +15,7 @@ Existen diferentes tipos de shellcodes según el contexto de ataque:
   - **Reverse shell**: Se conecta a un servidor remoto y permite al atacante tomar el control.
   - **Bind shell**: Abre un puerto en la máquina víctima para que el atacante se conecte.
 
-## 3. Características de un Shellcode
+### 3. Características de un Shellcode
 Un shellcode efectivo debe cumplir con los siguientes criterios:
 
 - **Pequeño**: Minimiza el tamaño para encajar en buffers pequeños.
@@ -23,7 +23,7 @@ Un shellcode efectivo debe cumplir con los siguientes criterios:
 - **Evasivo**: Evita caracteres nulos (`\x00`) y detección por antivirus.
 - **Portable**: Funciona en múltiples versiones del sistema operativo objetivo.
 
-## 4. Creación de un Shellcode
+### 4. Creación de un Shellcode
 Para crear un shellcode, se usa ensamblador y luego se convierte en una cadena de bytes. Por ejemplo, un shellcode en **x86 Linux** para ejecutar `/bin/sh`:
 
 ```assembly
@@ -60,7 +60,7 @@ objdump -d shellcode | grep '[0-9a-f]:' | grep -o '\b[0-9a-f]\{2\}\b' | tr -d '\
 
 Este comando genera una cadena de bytes que se puede inyectar en un programa.
 
-## 6. Uso del Shellcode en C
+### 6. Uso del Shellcode en C
 
 Podemos probar el shellcode en un programa en C:
 
@@ -86,7 +86,7 @@ gcc -m32 -fno-stack-protector -z execstack shellcode.c -o shellcode
 
 Si se ejecuta correctamente, abrirá una shell interactiva.
 
-## 7. Evasión de Detección
+### 7. Evasión de Detección
 
 Para evitar detecciones, se pueden aplicar técnicas como:
 
