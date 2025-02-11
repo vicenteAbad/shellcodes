@@ -80,8 +80,8 @@ int main() {
 Compilamos y ejecutamos:
 
 ```bash
-gcc -m32 -fno-stack-protector -z execstack shellcode.c -o shellcode
-./shellcode
+gcc -m32 -fno-stack-protector -z execstack shellcode.c -o shellcodec
+./shellcodec
 ```
 
 Si se ejecuta correctamente, abrirá una shell interactiva.
