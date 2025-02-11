@@ -40,8 +40,8 @@ _start:
     xor edx, edx         ; envp = NULL
     mov al, 0xb          ; syscall execve
     int 0x80             ; Llamada al kernel
-
-# 5. Conversión de Shellcode a Cadena de Bytes
+```
+### 5. Conversión de Shellcode a Cadena de Bytes
 
 Para convertir un shellcode en ensamblador a una cadena de bytes.
 
