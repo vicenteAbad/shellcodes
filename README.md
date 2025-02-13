@@ -62,7 +62,7 @@ Este comando genera una cadena de bytes que se puede inyectar en un programa.
 
 ### 6. Uso del Shellcode en C
 
-Podemos probar el shellcode en un programa en C, tambien llamado un loader:
+Podemos probar el shellcode en un programa en C, comúnmente denominado **loader**:
 
 ```c
 #include <stdio.h>
